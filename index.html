@@ -3,113 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sleep Ambient Player</title>
+<title>YouTube Infinite Loop</title>
 
 <style>
-
 html, body {
     margin: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
     background: #000;
-    font-family: Arial, sans-serif;
 }
 
-/* video layer */
 #player {
     position: fixed;
     inset: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 0;
 }
-
-/* ambient background overlay */
-#ambient {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(0,80,120,0.25), transparent 60%);
-    animation: drift 20s ease-in-out infinite;
-    z-index: 1;
-    pointer-events: none;
-}
-
-@keyframes drift {
-    0% { transform: scale(1) translate(0,0); filter: blur(0px); }
-    50% { transform: scale(1.05) translate(10px,-10px); filter: blur(2px); }
-    100% { transform: scale(1) translate(0,0); filter: blur(0px); }
-}
-
-/* UI layer */
-#ui {
-    position: fixed;
-    inset: 0;
-    z-index: 5;
-    pointer-events: none;
-    color: white;
-}
-
-/* bottom panel */
-#panel {
-    position: absolute;
-    left: 16px;
-    bottom: 16px;
-    background: rgba(0,0,0,0.4);
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    backdrop-filter: blur(8px);
-    transition: opacity 0.8s ease;
-}
-
-/* top status */
-#status {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    font-size: 12px;
-    opacity: 0.8;
-}
-
-/* hidden UI mode */
-.hidden {
-    opacity: 0;
-}
-
-/* subtle pulse */
-#pulse {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.2);
-    z-index: 2;
-    animation: pulse 8s infinite;
-    pointer-events: none;
-}
-
-@keyframes pulse {
-    0% { opacity: 0.15; }
-    50% { opacity: 0.05; }
-    100% { opacity: 0.15; }
-}
-
 </style>
 </head>
-
 <body>
 
 <div id="player"></div>
-
-<div id="ambient"></div>
-<div id="pulse"></div>
-
-<div id="ui">
-    <div id="status">Initializing...</div>
-    <div id="panel">
-        Sleep Mode Active<br>
-        Tap to show UI
-    </div>
-</div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -120,27 +35,6 @@ const VIDEO_ID = "AVWX6dPEeOY";
 let player = null;
 let monitor = null;
 let rebuilding = false;
-
-const ui = document.getElementById("ui");
-const statusEl = document.getElementById("status");
-
-let uiTimeout = null;
-
-function setStatus(t){
-    statusEl.textContent = t;
-}
-
-function hideUI(){
-    ui.classList.add("hidden");
-}
-
-function showUI(){
-    ui.classList.remove("hidden");
-    clearTimeout(uiTimeout);
-    uiTimeout = setTimeout(hideUI, 4000);
-}
-
-document.addEventListener("click", showUI);
 
 function onYouTubeIframeAPIReady() {
     createPlayer();
@@ -160,7 +54,7 @@ function createPlayer() {
             autoplay: 1,
             controls: 0,
             disablekb: 1,
-            fs: 0,
+            fs: 1,
             playsinline: 1,
             rel: 0,
             modestbranding: 1,
@@ -181,8 +75,6 @@ function createPlayer() {
 }
 
 function onReady() {
-
-    setStatus("Playing");
 
     play();
 
@@ -217,7 +109,9 @@ function onReady() {
 function play() {
 
     try {
+
         player.playVideo();
+
     } catch (e) {
         rebuild();
     }
@@ -229,8 +123,10 @@ function onStateChange(event) {
     if (event.data === YT.PlayerState.ENDED) {
 
         try {
+
             player.seekTo(0, true);
             player.playVideo();
+
         } catch (e) {
             rebuild();
         }
@@ -241,7 +137,7 @@ function onStateChange(event) {
 
 function onError(event) {
 
-    setStatus("Error: " + event.data);
+    console.log("YouTube Error:", event.data);
 
     rebuild();
 
@@ -249,22 +145,29 @@ function onError(event) {
 
 function rebuild() {
 
-    if (rebuilding) return;
+    if (rebuilding) {
+        return;
+    }
 
     rebuilding = true;
 
     clearInterval(monitor);
 
-    setStatus("Recovering...");
-
     try {
-        if (player) player.destroy();
+
+        if (player && typeof player.destroy === "function") {
+            player.destroy();
+        }
+
     } catch (e) {}
 
     setTimeout(() => {
+
         document.getElementById("player").innerHTML = "";
+
         createPlayer();
-    }, 2000);
+
+    }, 2500);
 
 }
 
@@ -273,10 +176,16 @@ window.addEventListener("online", rebuild);
 window.addEventListener("focus", play);
 
 document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) play();
+
+    if (!document.hidden) {
+        play();
+    }
+
 });
 
 </script>
 
 </body>
 </html>
+
+need for sleeping!!!
